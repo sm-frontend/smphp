@@ -1,5 +1,5 @@
 # SMPHP框架
-一个简单可信赖的php框架。官网： http://smphp.sm.cn
+一个简单可信赖的php框架。
 
 ## 为什么选择SMPHP
 > 实战开发总结  
