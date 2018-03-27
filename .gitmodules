@@ -1,0 +1,15 @@
+[submodule "APP-META"]
+	path = APP-META
+    url = http://gitlab-sc.alibaba-inc.com/sm-search-frontend/APP-META.git
+	branch = master
+	ignore = all
+[submodule "sm_common/SM"]
+	path = sm_common/SM
+    url = http://gitlab-sc.alibaba-inc.com/sm-search-frontend/SM.git
+	branch = dev
+	ignore = all
+[submodule "sm_common/application/Support"]
+	path = sm_common/application/Support
+	url = http://gitlab-sc.alibaba-inc.com/sm-search-frontend/Support.git
+    branch = dev
+
