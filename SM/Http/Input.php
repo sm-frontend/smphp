@@ -104,12 +104,12 @@ class Input
 	
 	public static function isGET()
 	{
-		return static::server('REQUEST_METHOD') == 'GET' ? true : false;
+		return static::getMethod() === 'GET' ? true : false;
 	}
 	
 	public static function isPOST()
 	{
-		return static::server('REQUEST_METHOD') == 'POST' ? true : false;
+		return static::getMethod() === 'POST' ? true : false;
 	}
 	
 	public static function isSSL()
@@ -124,6 +124,17 @@ class Input
 			return true;
 		} else {
 			return false;
+		}
+	}
+	
+	public static function getMethod()
+	{
+		if (isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
+			return strtoupper($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']);
+		}
+		
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			return strtoupper($_SERVER['REQUEST_METHOD']);
 		}
 	}
 }

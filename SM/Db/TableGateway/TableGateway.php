@@ -50,7 +50,7 @@ class TableGateway
 		
 		$this->db->pexecute($query, $this->db->getBind());
 		
-		switch ($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)) {
+		switch ($this->db->getDriver()) {
 			case 'pgsql':
 				return $this->db->query('SELECT LASTVAL()')->fetchColumn();
 			
@@ -143,6 +143,7 @@ class TableGateway
 		if (empty($result)) {
 			throw new \Exception('No data given for CRUD.');
 		}
+		
 		return $result;
 	}
 	

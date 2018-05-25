@@ -3,7 +3,7 @@ namespace SM\Db\Query;
 
 class Criterion implements CriteronInterface
 {
-	protected $exp = ['=', '!=', '>', '>=', '<', '<=', '<>', '><', 'LIKE', 'NOT LIKE', 'REGEXP', 'NOT REGEXP'];
+	protected $exp = ['=', '!=', '>', '>=', '<', '<=', '<>', '><', 'LIKE', 'NOT LIKE', 'REGEXP', 'NOT REGEXP', 'FIND_IN_SET', 'NOT FIND_IN_SET'];
 	protected $left;
 	protected $right;
 	protected $operator;
@@ -65,6 +65,10 @@ class Criterion implements CriteronInterface
 			return $this->left->toSql($db) . ' ' . $this->operator . ' ' . $this->right->toSql($db);
 		} else {
 			$db->bind($bindName, $this->right->toSql($db));
+
+			if (strpos($this->operator, 'FIND_IN_SET') !== false) {
+				return $this->operator . '(' . $bindName . ', ' . $this->left->toSql($db) . ')';
+			}
 			
 			return $this->left->toSql($db) . ' ' . $this->operator . ' ' . $bindName;
 		}

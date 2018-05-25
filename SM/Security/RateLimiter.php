@@ -27,11 +27,7 @@ class RateLimiter
 	
 	public function limitCall($key = null, $limit = 10, $expire = 1, $block = 0)
 	{
-		if (is_null($key)) {
-			$key = Input::fetchAltIp();
-		}
-		
-		$key     = static::PREFIX . $key;
+		$key     = $this->getCurrentKey($key);
 		$current = $this->redis->get($key);
 		
 		if ($current != null && $current >= $limit) {
@@ -52,5 +48,17 @@ class RateLimiter
 			$this->redis->exec();
 			return true;
 		}
+	}
+	
+	public function getCurrentKey($key)
+	{
+		is_null($key) && $key = Input::fetchAltIp();
+		
+		return static::PREFIX . $key;
+	}
+	
+	public function getCurrentValue($key)
+	{
+		return $this->redis->get($this->getCurrentKey($key));
 	}
 }

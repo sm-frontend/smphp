@@ -6,7 +6,7 @@ class MethodCollection extends \ArrayObject
 	const JQUERY_SELECTOR = '/^([a-z]*[.#])?([a-z0-9-_]+)(\[[a-z-]+="?([a-z0-9-_]+)"?\])?(:([a-z]+))?$/i';
 	const VALID_TEL       = '/^(([0\+]\d{2,3}-)?(0\d{2,3})-)?(\d{7,8})(-(\d{3,}))?$/';
 	const VALID_DATE      = '/^\d{4}[\/\-](0?[1-9]|1[012])[\/\-](0?[1-9]|[12][0-9]|3[01])$/';
-	const VALID_MOBILE    = '/^1[34578]\d{9}$/';
+	const VALID_MOBILE    = '/^1[3456789]\d{9}$/';
 	const VALID_DIGITS    = '/^\d+$/';
 	const VALID_CHINESE   = '/^[\x{4e00}-\x{9fa5}]+$/u';
 	const VALID_USERNAME  = '/^[\x{4e00}-\x{9fa5}\w\_]+$/u';
@@ -134,33 +134,36 @@ class MethodCollection extends \ArrayObject
 		return is_numeric($value) && $value >= $min;
 	}
 	
+	public function range($value, array $range)
+	{
+		$value = intval($value);
+		return $value >= $range[0] && $value <= $range[1];
+	}
+	
 	public function maxlength($value, $length)
 	{
-		$value = strval($value);
-		return !isset($value{$length});
+		return $this->getLength($value) <= $length;
 	}
 	
 	public function minlength($value, $length)
 	{
-		$value = strval($value);
-		return isset($value{--$length});
-	}
-	
-	public function range($value, array $range)
-	{
-		return $this->rangeLength(intval($value), $range);
+		return $this->getLength($value) >= $length;
 	}
 	
 	public function rangeLength($value, array $range)
 	{
+		$length = $this->getLength($value);
+		return $length >= $range[0] && $length <= $range[1];
+	}
+	
+	private function getLength($value)
+	{
 		if (is_array($value)) {
-			$count = count($value);
-		} elseif (is_numeric($value)) {
-			$count = $value;
+			$length = count($value);
 		} else {
-			$count = strlen($value);
+			$length = function_exists('mb_strlen') ? mb_strlen($value, 'UTF-8') : strlen($value);
 		}
-		return $count >= $range[0] && $count <= $range[1];
+		return $length;
 	}
 	
 	public function creditCard($value)

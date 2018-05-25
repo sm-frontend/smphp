@@ -168,6 +168,16 @@ class Criteria implements CriteronInterface
 	{
 		return $this->where($column, 'NOT REGEXP', $value);
 	}
+
+	public function whereFindInSet($column, $value)
+	{
+		return $this->where($column, 'FIND_IN_SET', $value);
+	}
+
+	public function whereNotFindInSet($column, $value)
+	{
+		return $this->where($column, 'NOT FIND_IN_SET', $value);
+	}
 	
 	public function whereNested(\Closure $callback, $and_or = 'OR')
 	{

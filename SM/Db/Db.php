@@ -9,7 +9,7 @@ use SM\Db\Query\Literal;
 use SM\Db\TableGateway\TableGateway;
 use SM\Cache\CacheInterface;
 
-class Db
+class DbNew
 {
 	protected $pdo;
 	protected $table;

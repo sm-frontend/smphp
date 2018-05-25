@@ -4,6 +4,7 @@ namespace SM\Db\Connection;
 use PDO;
 use PDOException;
 use SM\Db\Query\Query;
+use SM\Util\Arr;
 
 class Connection extends PDO
 {
@@ -12,6 +13,7 @@ class Connection extends PDO
 	protected $guid  = 0;
 	protected $debug = false;
 	
+	protected $dbDriver;
 	protected $nameOpening;
 	protected $nameClosing;
 	
@@ -27,7 +29,9 @@ class Connection extends PDO
 			throw new \Exception('Database failed: ' . $e->getMessage() . ' in ' . $dsn);
 		}
 		
-		switch ($this->getAttribute(PDO::ATTR_DRIVER_NAME)) {
+		$this->dbDriver = (string) $this->getAttribute(PDO::ATTR_DRIVER_NAME);
+		
+		switch ($this->dbDriver) {
 			case 'mysql':
 				$this->nameOpening = $this->nameClosing = '`';
 			break;
@@ -175,12 +179,13 @@ class Connection extends PDO
 				$values[$key] = $this->quote($value);
 			}
 		}
+		
 		return preg_replace($keys, $values, $query, 1, $count);
 	}
 	
 	public function getColumns($table)
 	{
-		switch ($this->getAttribute(PDO::ATTR_DRIVER_NAME)) {
+		switch ($this->dbDriver) {
 			case 'mysql':
 				$stmt = $this->pexecute('SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = :table_name', [':table_name' => $table]);
 				return $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -191,7 +196,12 @@ class Connection extends PDO
 				
 			case 'sqlite':
 				$stmt = $this->query('PRAGMA table_info(' . $this->quoteName($table) . ')');
-				return \SM\Util\Arr::getCols($stmt->fetchAll(PDO::FETCH_ASSOC), 'name');
+				return Arr::getCols($stmt->fetchAll(PDO::FETCH_ASSOC), 'name');
 		}
+	}
+	
+	public function getDriver()
+	{
+		return $this->dbDriver;
 	}
 }

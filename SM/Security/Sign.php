@@ -18,7 +18,7 @@ class Sign
 		foreach ($params as $key => $val) {
 			if (is_array($val)) {
 				$sign .= static::create($val, $salt);
-			} elseif ($key != '' && $val != '') {
+			} elseif ($key !== '' && $val !== null) {
 				$sign .= $key . $val;
 			}
 		}

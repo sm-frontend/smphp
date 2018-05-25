@@ -76,14 +76,19 @@ class Curl
 	{
 		return $this->request($url, static::HTTP_METHOD_POST, $postData, $headers, $options, $callback, $formContentType);
 	}
+
+	public function clean()
+	{
+		$this->requests = [];
+	}
 	
 	public function execute($window = 0)
 	{
 		$this->requestSize = count($this->requests);
-		
+
 		if ($this->requestSize == 1) {
 			return $this->singleCurl();
-		} else {
+		} elseif ($this->requestSize > 1) {
 			return $this->multiCurl($window);
 		}
 	}
@@ -114,7 +119,8 @@ class Curl
 		$output = curl_exec($ch);
 		
 		$info   = curl_getinfo($ch);
-		$this->logError($ch, $info, $request);
+		$errno  = curl_errno($ch);
+		$this->logError($errno, $ch, $info, $request);
 		
 		curl_close($ch);
 		
@@ -162,6 +168,8 @@ class Curl
 		} while ($running);
 		
 		curl_multi_close($master);
+		$this->clean();
+
 		return true;
 	}
 	
@@ -187,8 +195,8 @@ class Curl
 			if ($callback && is_callable($callback)) {
 				$info   = curl_getinfo($done['handle']);
 				$output = curl_multi_getcontent($done['handle']);
-				
-				$this->logError($done['handle'], $info, $request);
+
+				$this->logError($done['result'], $done['handle'], $info, $request);
 				
 				call_user_func($callback, $output, $info, $request);
 			}
@@ -258,9 +266,9 @@ class Curl
 		}
 	}
 	
-	private function logError($ch, $info, $request)
+	private function logError($errno, $ch, $info, $request)
 	{
-		if ($errno = curl_errno($ch)) {
+		if ($errno) {
 			$error = curl_error($ch);
 			
 			\SM\Log\Log::write('[PHP cURL error] ' . $errno . ':' . $error . ':' . serialize($info) . ':' . $request->url);

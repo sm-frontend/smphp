@@ -9,7 +9,7 @@ class Cookie
 	public static function set($name, $value, $encode = false, $expire = null, $path = null, $domain = null, $secure = false, $httponly = false)
 	{
 		if ($encode && $value) {
-			$value = static::getEncrypt()->encode(serialize($value));
+			$value = static::encode($value);
 		}
 		
 		if ($expire !== null && $expire != 0) {
@@ -33,7 +33,7 @@ class Cookie
 			$value = $_COOKIE[$name];
 			
 			if ($value && $decode) {
-				$value = unserialize(static::getEncrypt()->decode($value));
+				$value = static::decode($value);
 			}
 			
 			return is_string($value) ? Str::htmlEscape($value) : $value;
@@ -55,6 +55,16 @@ class Cookie
 	public static function has($name)
 	{
 		return isset($_COOKIE[$name]);
+	}
+	
+	public static function encode($value)
+	{
+		return static::getEncrypt()->encode(serialize($value));
+	}
+	
+	public static function decode($value)
+	{
+		return unserialize(static::getEncrypt()->decode($value));
 	}
 	
 	protected static function getEncrypt()
