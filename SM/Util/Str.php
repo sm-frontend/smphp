@@ -181,12 +181,7 @@ class Str
 	
 	public static function random($len = 32)
 	{
-		if (false !== ($rand = \SM\Security\Random::getBytes(16))) {
-			$hash = bin2hex($rand);
-		} else {
-			$hash = md5(microtime() . uniqid(mt_rand(), true));
-		}
-		return substr($hash, 0, $len);
+		return \SM\Security\Random::text($len);
 	}
 	
 	public static function jsEscape($str, $quoteType = "'")

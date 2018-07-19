@@ -27,7 +27,7 @@ class Route
 	
 	public function setPath($path)
 	{
-		$this->_path = Arr::toArray($path);
+		$this->_path = $path;
 	}
 	
 	public function getPath()
@@ -133,21 +133,11 @@ class Route
 		$found_dynamic_args   = [];
 		
 		$path_to_match        = $this->removeExtension($path_to_match);
+		
+		$this_path_elements   = explode('/', ltrim($this->_path, '/'));
 		$match_path_elements  = explode('/', ltrim($path_to_match, '/'));
 		
-		$count_path_elements  = count($match_path_elements);
-		$this_path_elements   = [];
-		
-		foreach ($this->_path as $path) {
-			$elements = explode('/', ltrim($path, '/'));
-			
-			if (count($elements) === $count_path_elements) {
-				$this_path_elements = $elements;
-				break;
-			}
-		}
-		
-		if (empty($this_path_elements)) {
+		if (count($this_path_elements) !== count($match_path_elements)) {
 			return false;
 		}
 		

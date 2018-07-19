@@ -3,6 +3,22 @@ namespace SM\Security;
 
 class Random
 {
+	public static function int($min = 1, $max = 100)
+	{
+		return mt_rand($min, $max);
+	}
+	
+	public static function text($len)
+	{
+		if (false !== ($rand = static::getBytes(16))) {
+			$hash = bin2hex($rand);
+		} else {
+			$hash = md5(microtime() . uniqid(mt_rand(), true));
+		}
+		
+		return substr($hash, 0, $len);
+	}
+	
 	public static function getBytes($length = 16)
 	{
 		if (function_exists('random_bytes')) {

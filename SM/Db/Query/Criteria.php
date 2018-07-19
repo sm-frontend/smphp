@@ -38,7 +38,7 @@ class Criteria implements CriteronInterface
 		$this->conjunction = 'OR';
 		return $this;
 	}
-	
+
 	public function where($column, $operator = '=', $value = null)
 	{
 		if (is_array($column)) {

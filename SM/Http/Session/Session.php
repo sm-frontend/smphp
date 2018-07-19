@@ -17,7 +17,9 @@ class Session
 		
 		if (!$this->isActived()) {
 			session_cache_limiter('');
-			session_start();
+			session_start([
+				'cookie_httponly' => true
+			]);
 		}
 	}
 	

@@ -28,7 +28,7 @@ class Mysql extends AdapterAbstract
 			$conn->exec("SET NAMES '{$config['charset']}'");
 		}
 		
-		$conn->exec('SET SQL_MODE=ANSI_QUOTES');
+		$conn->exec("SET SQL_MODE='ANSI_QUOTES'");
 		
 		return $conn;
 	}

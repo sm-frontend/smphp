@@ -48,15 +48,19 @@ class TableGateway
 		
 		$query   = sprintf('%s INTO %s (%s) VALUES (%s)', ($replace ? 'REPLACE' : 'INSERT'), $this->quoteTable, $columns, $values);
 		
-		$this->db->pexecute($query, $this->db->getBind());
-		
-		switch ($this->db->getDriver()) {
-			case 'pgsql':
-				return $this->db->query('SELECT LASTVAL()')->fetchColumn();
-			
-			default:
-				return $this->db->lastInsertId();
+		$result  = $this->db->pexecute($query, $this->db->getBind());
+
+		if ($result) {
+			switch ($this->db->getDriver()) {
+				case 'pgsql':
+					return $this->db->query('SELECT LASTVAL()')->fetchColumn();
+
+				default:
+					return $this->db->lastInsertId();
+			}
 		}
+
+		return false;
 	}
 	
 	public function batchInsert(array $columns, array $rows)
@@ -91,7 +95,6 @@ class TableGateway
 	public function update($data, $where = null)
 	{
 		$sets = [];
-		
 		foreach ($this->parseData($data) as $column => $value) {
 			$sets[] = $column . ' = ' . $value;
 		}
@@ -104,7 +107,7 @@ class TableGateway
 		
 		$result = $this->db->pexecute($query, $this->db->getBind());
 		
-		return $result->rowCount();
+		return $result ? $result->rowCount() : false;
 	}
 	
 	public function delete($where)
@@ -117,7 +120,7 @@ class TableGateway
 		
 		$result = $this->db->pexecute($query, $this->db->getBind());
 		
-		return $result->rowCount() > 0;
+		return $result && $result->rowCount() > 0;
 	}
 	
 	protected function parseData(array $data)

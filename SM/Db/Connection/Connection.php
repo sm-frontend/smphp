@@ -22,9 +22,8 @@ class Connection extends PDO
 	public function __construct($dsn, $user = null, $password = null, $attributes = [])
 	{
 		try {
-			 parent::__construct($dsn, $user, $password, $attributes);
-			 $this->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-			 
+			parent::__construct($dsn, $user, $password, $attributes);
+			$this->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		} catch (PDOException $e) {
 			throw new \Exception('Database failed: ' . $e->getMessage() . ' in ' . $dsn);
 		}
@@ -34,11 +33,10 @@ class Connection extends PDO
 		switch ($this->dbDriver) {
 			case 'mysql':
 				$this->nameOpening = $this->nameClosing = '`';
-			break;
-			
+				break;
 			default:
 				$this->nameOpening = $this->nameClosing = '"';
-			break;
+				break;
 		}
 	}
 	
@@ -77,16 +75,20 @@ class Connection extends PDO
 	
 	public function pexecute($sql, $params = null)
 	{
-		$stmt = $this->prepare($sql);
-		
-		if (is_array($params)) {
-			if ($this->debug) {
-				$this->logs[] = $this->rawQuery($sql, $params);
+		try {
+			$stmt = $this->prepare($sql);
+
+			if (is_array($params)) {
+				if ($this->debug) {
+					$this->logs[] = $this->rawQuery($sql, $params);
+				}
+
+				$stmt->execute($params);
+			} else {
+				$stmt->execute();
 			}
-			
-			$stmt->execute($params);
-		} else {
-			$stmt->execute();
+		} catch (PDOException $e) {
+			return false;
 		}
 		
 		return $stmt;
@@ -187,8 +189,8 @@ class Connection extends PDO
 	{
 		switch ($this->dbDriver) {
 			case 'mysql':
-				$stmt = $this->pexecute('SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = :table_name', [':table_name' => $table]);
-				return $stmt->fetchAll(PDO::FETCH_COLUMN);
+				$stmt = $this->query('SHOW COLUMNS FROM ' . $this->quoteName($table));
+				return Arr::getCols($stmt->fetchAll(PDO::FETCH_ASSOC), 'Field');
 			
 			case 'pgsql':
 				$stmt = $this->pexecute('SELECT column_name FROM information_schema.columns WHERE table_schema = :table_schema AND table_name = :table_name', [':table_schema' => 'public', ':table_name' => $table]);

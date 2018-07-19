@@ -28,28 +28,28 @@ class Dispatcher
 		$params = $route->getMapArguments();
 		
 		if (empty($class)) {
-			throw new RouteException('Class Name not specified.');
+			throw new \Exception('Class Name not specified.');
 		}
 		
 		if (empty($method)) {
-			throw new RouteException('Method Name not specified.');
+			throw new \Exception('Method Name not specified.');
 		}
 		
 		$class  = ucfirst($class);
 		$method = str_replace('-', '_', $method);
 		
 		if (!preg_match('/^[a-zA-Z0-9_\\\]+$/', $class)) {
-			throw new RouteException('Disallowed characters in class name ' . $class);
+			throw new \Exception('Disallowed characters in class name ' . $class);
 		}
 		
 		$class = $this->_classPath . $class . $this->_suffix;
 		
 		if (false === class_exists($class, true)) {
-			throw new RouteException('Class not found ' . $class);
+			throw new \Exception('Class not found ' . $class);
 		}
 		
 		if (false === method_exists($class, $method)) {
-			throw new RouteException('Method not found ' . $method);
+			throw new \Exception('Method not found ' . $method);
 		}
 		
 		$params += \SM\Http\Input::request();

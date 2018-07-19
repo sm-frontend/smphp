@@ -50,10 +50,10 @@ abstract class Adapter implements AdapterInterface
 		}
 		
 		if ($haveAccess === null) {
-			return ($this->getDefaultAction() == Acl::ALLOW);
+			return ($this->getDefaultAction() === Acl::ALLOW);
 		}
 		
-		return ($haveAccess == Acl::ALLOW);
+		return ($haveAccess === Acl::ALLOW);
 	}
 	
 	protected function rolePermission($resourceName, $access, $action)

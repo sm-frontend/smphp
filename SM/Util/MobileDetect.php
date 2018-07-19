@@ -223,7 +223,8 @@ class MobileDetect
 		'amap'           => 'amap/[0-9.]+',
 		'Quark'          => 'Quark/[0-9.]+',
 		'OppoBrowser'    => 'OppoBrowser/[0-9.]+',
-		'VivoBrowser'    => 'VivoBrowser/[0-9.]+'
+		'VivoBrowser'    => 'VivoBrowser/[0-9.]+',
+		'DingTalk'       => 'DingTalk/[0-9.]+'
 	];
 	
 	protected static $utilities = [
@@ -295,7 +296,8 @@ class MobileDetect
 		'amap'             => 'amap/[VER]',
 		'Quark'            => 'Quark/[VER]',
 		'OppoBrowser'      => 'OppoBrowser/[VER]',
-		'VivoBrowser'      => 'VivoBrowser/[VER]'
+		'VivoBrowser'      => 'VivoBrowser/[VER]',
+		'DingTalk'         => 'DingTalk/[VER]'
 	];
 	
 	public function __construct(array $headers = null, $userAgent = null)
@@ -358,7 +360,6 @@ class MobileDetect
 		if (!empty($userAgent)) {
 			return $this->userAgent = $userAgent;
 		} else {
-			
 			$this->userAgent = null;
 			
 			foreach ($this->getUaHttpHeaders() as $altHeader) {
@@ -602,11 +603,9 @@ class MobileDetect
 		$properties = self::getProperties();
 		
 		if (isset($properties[$propertyName])) {
-			
 			$properties[$propertyName] = (array) $properties[$propertyName];
 			
 			foreach ($properties[$propertyName] as $propertyMatchString) {
-				
 				$propertyPattern = str_replace('[VER]', self::VER, $propertyMatchString);
 				
 				preg_match(sprintf('#%s#is', $propertyPattern), $this->userAgent, $match);

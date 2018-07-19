@@ -8,25 +8,26 @@ class Url
 {
 	public static function current()
 	{
-		$protocol = Input::isSSL() ? 'https://' : 'http://';
+		$protocol = (Input::isSSL() ? 'https' : 'http') . '://';
 		return $protocol . Input::fetchHost() . Input::server('REQUEST_URI');
 	}
 	
 	public static function append($url, $param = null)
 	{
+		$url = rtrim($url, '?#&');
+		
 		if (!empty($param)) {
 			is_array($param) || parse_str($param, $param);
 			
-			$url      = rtrim($url, '?#&');
 			$parseUrl = parse_url($url);
 			
 			if (isset($parseUrl['query'])) {
 				parse_str($parseUrl['query'], $output);
-				
 				$intersect = array_intersect_key($output, $param);
+				
 				if (!empty($intersect)) {
 					foreach ($intersect as $k => $v) {
-						$url = str_replace("$k=$v", $k . '=' . urlencode($param[$k]), $url);
+						$url = str_replace("$k=$v", "$k=" . urlencode($param[$k]), $url);
 						unset($param[$k]);
 					}
 				}
@@ -37,7 +38,8 @@ class Url
 					$url = substr($url, 0, -(strlen($parseUrl['fragment']) + 1));
 				}
 				
-				$url .= (isset($parseUrl['query']) ? '&' : '?') . static::buildQuery($param);
+				$url .= isset($parseUrl['query']) ? '&' : '?';
+				$url .= static::buildQuery($param);
 				$url .= isset($parseUrl['fragment']) ? '#' . $parseUrl['fragment'] : '';
 			}
 		}
