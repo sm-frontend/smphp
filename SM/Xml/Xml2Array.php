@@ -6,7 +6,7 @@ class Xml2Array
 	private $xml;
 	private $root;
 	
-	public function __construct($xml, $root = false, $nonchar = false, $namespace = false)
+	public function __construct($xml, $root = false, $nonchar = false, $namespace = false, $entity = false)
 	{
 		$this->xml  = $xml;
 		$this->root = $root;
@@ -18,11 +18,15 @@ class Xml2Array
 		if ($namespace) {
 			$this->removeNamespace();
 		}
+
+		if ($entity) {
+			$this->disableExternalEntity();
+		}
 	}
-	
-	public static function createArray($xml, $root = false, $nonchar = false, $namespace = false)
+
+	public static function createArray($xml, $root = false, $nonchar = false, $namespace = false, $entity = false)
 	{
-		$converter = new static($xml, $root, $nonchar, $namespace);
+		$converter = new static($xml, $root, $nonchar, $namespace, $entity);
 		return $converter->toArray();
 	}
 	
@@ -40,14 +44,14 @@ class Xml2Array
 	private function convert($xml, $root)
 	{
 		if (!$xml->children()) {
-			return $xml->__toString();
+			return trim($xml->__toString());
 		}
 		
 		$array = [];
 		
 		foreach ($xml->children() as $element => $node) {
 			if ($attributes = $node->attributes()) {
-				$data = ($node->count() > 0) ? $this->convert($node, false) : $node->__toString();
+				$data = ($node->count() > 0) ? $this->convert($node, false) : trim($node->__toString());
 				
 				if (!is_array($data)) {
 					$data = ['value' => $data];
@@ -86,5 +90,10 @@ class Xml2Array
 	{
 		$this->xml = preg_replace('/<(\/)?(\w+):(\w+)/', '<${1}${2}_${3}', $this->xml);
 		$this->xml = preg_replace('/(\w+):(\w+)="(.*?)"/', '${1}_${2}="${3}"', $this->xml);
+	}
+
+	public function disableExternalEntity()
+	{
+		return libxml_disable_entity_loader(true);
 	}
 }

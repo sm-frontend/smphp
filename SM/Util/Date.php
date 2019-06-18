@@ -16,6 +16,8 @@ class Date
 		'm' => [60, '分钟'],
 		's' => [1, '秒']
 	];
+	private static $timeago = '前';
+	private static $timenow = '刚刚';
 	
 	public static function timeZone($timezone)
 	{
@@ -47,10 +49,10 @@ class Date
 		
 		foreach (static::$map as $k => $v) {
 			if (0 != ($c = floor($time / $v[0]))) {
-				return $c . $v[1] . '前';
+				return $c . $v[1] . static::$timeago;
 			}
 		}
-		return '刚刚';
+		return static::$timenow;
 	}
 	
 	public static function timeConvert($time, $scope = ['h', 'm'])

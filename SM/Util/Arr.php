@@ -59,7 +59,7 @@ class Arr
 	
 	public static function getValue($array, $key, $delimiter = '.', $default = null)
 	{
-		if (!is_array($array)) {
+		if (!is_array($array) && !($array instanceof \ArrayAccess)) {
 			$array = [$array];
 		}
 		

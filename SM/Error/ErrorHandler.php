@@ -30,10 +30,7 @@ class ErrorHandler
 			$message .= static::serverInfo();
 
 			Log::$level('[PHP ' . $level . '] ' . $message);
-			
-			if (SM_DEBUG) {
-				echo 'PHP ' . $level . ': ', $message, PHP_EOL;
-			}
+			static::debug();
 		}
 	}
 	
@@ -43,10 +40,7 @@ class ErrorHandler
 		$message .= static::serverInfo();
 
 		Log::fatal('[PHP exception] ' . $message);
-		
-		if (SM_DEBUG) {
-			echo 'PHP exception: ', $message, PHP_EOL;
-		}
+		static::debug();
 	}
 	
 	public static function shutdownHandler()
@@ -58,10 +52,7 @@ class ErrorHandler
 			$message .= static::serverInfo();
 
 			Log::fatal('[PHP Fatal Error] ' . $message);
-			
-			if (SM_DEBUG) {
-				echo 'PHP Fatal Error: ', $message, PHP_EOL;
-			}
+			static::debug();
 		}
 		
 		Log::save();
@@ -81,5 +72,12 @@ class ErrorHandler
 			return static::$serverInfo;
 		}
 		return '';
+	}
+
+	private static function debug()
+	{
+		if (SM_DEBUG && ($log = Log::getLog())) {
+			echo end($log), PHP_EOL;
+		}
 	}
 }

@@ -10,6 +10,7 @@ class Curl
 	private $requests    = [];
 	private $requestMap  = [];
 	private $requestSize = 0;
+	private $responses   = [];
 	
 	protected $options   = [
 		CURLOPT_SSL_VERIFYPEER => 0,
@@ -21,8 +22,12 @@ class Curl
 		CURLOPT_HEADER         => 0
 	];
 	
-	const HTTP_METHOD_GET  = 'GET';
-	const HTTP_METHOD_POST = 'POST';
+	const HTTP_METHOD_GET    = 'GET';
+	const HTTP_METHOD_POST   = 'POST';
+	const HTTP_METHOD_HEAD   = 'HEAD';
+	const HTTP_METHOD_PUT    = 'PUT';
+	const HTTP_METHOD_PATCH  = 'PATCH';
+	const HTTP_METHOD_DELETE = 'DELETE';
 	
 	const DEFAULT_CONNECTTIMEOUT = 1;
 	const DEFAULT_TIMEOUT        = 3;
@@ -61,9 +66,9 @@ class Curl
 		return $this;
 	}
 	
-	public function request($url, $method = self::HTTP_METHOD_GET, $postData = null, $headers = null, $options = null, $callback = null, $formContentType = self::HTTP_FORM_CONTENT_TYPE_APPLICATION)
+	public function request($url, $method = self::HTTP_METHOD_GET, $data = null, $headers = null, $options = null, $callback = null, $formContentType = self::HTTP_FORM_CONTENT_TYPE_APPLICATION)
 	{
-		$this->requests[] = new CurlRequest($url, $method, $postData, $headers, $options, $callback, $formContentType);
+		$this->requests[] = new CurlRequest($url, $method, $data, $headers, $options, $callback, $formContentType);
 		return $this;
 	}
 	
@@ -72,14 +77,29 @@ class Curl
 		return $this->request($url, static::HTTP_METHOD_GET, null, $headers, $options, $callback);
 	}
 	
-	public function post($url, $postData = null, $headers = null, $options = null, $callback = null, $formContentType = self::HTTP_FORM_CONTENT_TYPE_APPLICATION)
+	public function head($url, $headers = null, $options = null, $callback = null)
 	{
-		return $this->request($url, static::HTTP_METHOD_POST, $postData, $headers, $options, $callback, $formContentType);
+		return $this->request($url, static::HTTP_METHOD_HEAD, null, $headers, $options, $callback);
 	}
-
-	public function clean()
+	
+	public function delete($url, $headers = null, $options = null, $callback = null)
 	{
-		$this->requests = [];
+		return $this->request($url, static::HTTP_METHOD_DELETE, null, $headers, $options, $callback);
+	}
+	
+	public function post($url, $data = null, $headers = null, $options = null, $callback = null, $formContentType = self::HTTP_FORM_CONTENT_TYPE_APPLICATION)
+	{
+		return $this->request($url, static::HTTP_METHOD_POST, $data, $headers, $options, $callback, $formContentType);
+	}
+	
+	public function put($url, $data = null, $headers = null, $options = null, $callback = null)
+	{
+		return $this->request($url, static::HTTP_METHOD_PUT, $data, $headers, $options, $callback);
+	}
+	
+	public function patch($url, $data = null, $headers = null, $options = null, $callback = null)
+	{
+		return $this->request($url, static::HTTP_METHOD_PATCH, $data, $headers, $options, $callback);
 	}
 	
 	public function execute($window = 0)
@@ -149,6 +169,8 @@ class Curl
 			$this->addRequestMap($master, $i);
 		}
 		
+		$this->responses = [];
+		
 		do {
 			$running = 0;
 			
@@ -168,9 +190,9 @@ class Curl
 		} while ($running);
 		
 		curl_multi_close($master);
-		$this->clean();
+		$this->requests = [];
 
-		return true;
+		return $this->responses;
 	}
 	
 	private function addRequestMap($master, $i)
@@ -187,18 +209,20 @@ class Curl
 	private function processResponse($master, &$i)
 	{
 		while ($done = curl_multi_info_read($master)) {
+			$ri      = $this->requestMap[(string) $done['handle']];
+			$request = $this->requests[$ri];
 			
-			$request  = $this->requests[$this->requestMap[(string) $done['handle']]];
+			$info    = curl_getinfo($done['handle']);
+			$output  = curl_multi_getcontent($done['handle']);
+
+			$this->logError($done['result'], $done['handle'], $info, $request);
 			
 			$callback = $request->callback ?: $this->callback;
 			
 			if ($callback && is_callable($callback)) {
-				$info   = curl_getinfo($done['handle']);
-				$output = curl_multi_getcontent($done['handle']);
-
-				$this->logError($done['result'], $done['handle'], $info, $request);
-				
 				call_user_func($callback, $output, $info, $request);
+			} else {
+				$this->responses[$ri] = $output;
 			}
 			
 			if ($i < $this->requestSize && isset($this->requests[$i])) {
@@ -221,11 +245,28 @@ class Curl
 			$options = $request->options + $options;
 		}
 		
-		if (!empty($request->postData) || $request->method == static::HTTP_METHOD_POST) {
-			$this->parsePostdata($request);
-			
-			$options[CURLOPT_POST]       = 1;
-			$options[CURLOPT_POSTFIELDS] = $request->postData;
+		switch ($request->method) {
+			case static::HTTP_METHOD_POST:
+				$this->parsePostdata($request);
+				
+				$options[CURLOPT_POST]       = true;
+				$options[CURLOPT_POSTFIELDS] = $request->data;
+				break;
+				
+			case static::HTTP_METHOD_HEAD:
+				$options[CURLOPT_NOBODY]        = true;
+				$options[CURLOPT_HEADER]        = true;
+				$options[CURLOPT_CUSTOMREQUEST] = $request->method;
+				break;
+				
+			case static::HTTP_METHOD_PUT:
+			case static::HTTP_METHOD_PATCH:
+			case static::HTTP_METHOD_DELETE:
+				$options[CURLOPT_CUSTOMREQUEST] = $request->method;
+				if (!empty($request->data)) {
+					$options[CURLOPT_POSTFIELDS] = $request->data;
+				}
+				break;
 		}
 		
 		$headers = $this->__get('headers');
@@ -251,17 +292,16 @@ class Curl
 	
 	private function parsePostdata($request)
 	{
-		if (is_array($request->postData)) {
-			foreach ($request->postData as $key => $value) {
+		if (is_array($request->data)) {
+			foreach ($request->data as $key => $value) {
 				if (is_string($value) && strpos($value, '@') === 0) {
-					$request->postData[$key]  = $this->createFile(ltrim($value, '@'));
-					
+					$request->data[$key]      = $this->createFile(ltrim($value, '@'));
 					$request->formContentType = static::HTTP_FORM_CONTENT_TYPE_MULTIPART;
 				}
 			}
 			
 			if ($request->formContentType === static::HTTP_FORM_CONTENT_TYPE_APPLICATION) {
-				$request->postData = \SM\Http\Url::buildQuery($request->postData);
+				$request->data = \SM\Http\Url::buildQuery($request->data);
 			}
 		}
 	}
@@ -270,13 +310,12 @@ class Curl
 	{
 		if ($errno) {
 			$error = curl_error($ch);
-			
-			\SM\Log\Log::write('[PHP cURL error] ' . $errno . ':' . $error . ':' . serialize($info) . ':' . $request->url);
+			\SM\Error\ErrorTrigger::notice('[PHP cURL error] ' . $errno . ':' . $error . ':' . serialize($info) . ':' . $request->url, __FILE__, __LINE__);
 		}
 	}
 	
 	public function __destruct()
 	{
-		unset($this->callback, $this->options, $this->headers, $this->requests);
+		unset($this->callback, $this->options, $this->headers, $this->requests, $this->responses);
 	}
 }

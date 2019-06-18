@@ -69,7 +69,7 @@ class Router
 			$path = '/';
 		}
 		
-		$method = Input::server('REQUEST_METHOD');
+		$method = Input::getMethod();
 		
 		foreach ($this->_routes as $route) {
 			if ($route->checkRequestMethod($method)) {
@@ -80,6 +80,7 @@ class Router
 				return $route;
 			}
 		}
-		throw new \Exception('Route not found.');
+		
+		throw new RouteException('Route not found.');
 	}
 }

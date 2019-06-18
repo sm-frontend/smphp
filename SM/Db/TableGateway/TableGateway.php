@@ -63,14 +63,29 @@ class TableGateway
 		return false;
 	}
 	
-	public function batchInsert(array $columns, array $rows)
+	public function batchInsert(array $columns, array $rows, bool $ignore = false)
 	{
-		$values = [];
-		
+		$values     = [];
+		$allColumns = $this->getColumns();
+		$inColumns  = $colIndex = [];
+
+		$columns = array_values($columns);
+		foreach ($columns as $i => $column) {
+			if (in_array($column, $allColumns)) {
+				$inColumns[] = $this->db->quoteName($column);
+				$colIndex[]  = $i;
+			}
+		}
+
 		foreach ($rows as $row) {
-			$vs = [];
-			
+			$row = array_values($row);
+			$vs  = [];
+
 			foreach ($row as $i => $value) {
+				if (!in_array($i, $colIndex)) {
+					continue;
+				}
+
 				if (is_string($value)) {
 					$value = $this->db->quote($value);
 				} elseif (is_null($value)) {
@@ -80,14 +95,15 @@ class TableGateway
 				}
 				$vs[] = $value;
 			}
+
 			$values[] = '(' . implode(', ', $vs) . ')';
 		}
-		
-		foreach ($columns as $i => $column) {
-			$columns[$i] = $this->db->quoteName($column);
+
+		if (empty($values)) {
+			throw new \Exception('Rows data are empty or ill-formed.');
 		}
-		
-		$query = sprintf('INSERT INTO %s (%s) VALUES %s', $this->quoteTable, implode(', ', $columns), implode(', ', $values));
+
+		$query = sprintf('INSERT %s INTO %s (%s) VALUES %s', $ignore ? 'IGNORE' : '', $this->quoteTable, implode(', ', $inColumns), implode(', ', $values));
 		
 		return $this->db->exec($query);
 	}

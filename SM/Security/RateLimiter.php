@@ -25,7 +25,7 @@ class RateLimiter
 		return $this->redis;
 	}
 	
-	public function limitCall($key = null, $limit = 10, $expire = 1, $block = 0)
+	public function limitCall($key = null, $limit = 10, $expire = 1, $block = 0, $multi = true)
 	{
 		$key     = $this->getCurrentKey($key);
 		$current = $this->redis->get($key);
@@ -37,19 +37,23 @@ class RateLimiter
 			return false;
 		} else {
 			$ttl = $this->redis->ttl($key);
-			
-			$this->redis->multi(\Redis::MULTI);
+			if ($multi) {
+				$this->redis->multi(\Redis::MULTI);
+			}
+
 			$this->redis->incr($key);
 			
 			if ($ttl < 0) {
 				$this->redis->expire($key, $expire);
 			}
 			
-			$this->redis->exec();
+			if ($multi) {
+				$this->redis->exec();
+			}
 			return true;
 		}
 	}
-	
+
 	public function getCurrentKey($key)
 	{
 		is_null($key) && $key = Input::fetchAltIp();

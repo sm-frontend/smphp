@@ -99,6 +99,12 @@ class MethodCollection extends \ArrayObject
 		return is_string($value) && base64_encode(base64_decode($value)) === $value;
 	}
 	
+	public function json($value)
+	{
+		json_decode($value);
+		return JSON_ERROR_NONE === json_last_error();
+	}
+	
 	public function arr($value)
 	{
 		return is_array($value);

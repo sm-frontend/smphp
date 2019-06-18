@@ -11,10 +11,13 @@ class Log
 	const WARNING = 'warning';
 	
 	public static $phpErrorToLevel = [
-		E_WARNING    => self::WARNING,
-		E_NOTICE     => self::NOTICE,
-		E_STRICT     => self::WARNING,
-		E_DEPRECATED => self::WARNING
+		E_WARNING      => self::WARNING,
+		E_NOTICE       => self::NOTICE,
+		E_STRICT       => self::WARNING,
+		E_DEPRECATED   => self::WARNING,
+		E_USER_ERROR   => self::FATAL,
+		E_USER_WARNING => self::WARNING,
+		E_USER_NOTICE  => self::NOTICE,
 	];
 	
 	protected static $_log     = [];

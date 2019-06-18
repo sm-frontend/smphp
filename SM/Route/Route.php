@@ -12,10 +12,6 @@ class Route
 	private $_extension;
 	private $_dynamicElements = [];
 	private $_mapArguments    = [];
-
-	/*
-	 * ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
-	 */
 	private $_requestMethod   = [];
 	
 	public function __construct($path = null)
@@ -27,7 +23,7 @@ class Route
 	
 	public function setPath($path)
 	{
-		$this->_path = $path;
+		$this->_path = Arr::toArray($path);
 	}
 	
 	public function getPath()
@@ -112,7 +108,7 @@ class Route
 	{
 		$this->_requestMethod = array_map('strtoupper', Arr::toArray($methods));
 	}
-	
+
 	private function removeExtension($path)
 	{
 		if (!empty($this->_extension)) {
@@ -133,11 +129,21 @@ class Route
 		$found_dynamic_args   = [];
 		
 		$path_to_match        = $this->removeExtension($path_to_match);
-		
-		$this_path_elements   = explode('/', ltrim($this->_path, '/'));
 		$match_path_elements  = explode('/', ltrim($path_to_match, '/'));
 		
-		if (count($this_path_elements) !== count($match_path_elements)) {
+		$count_path_elements  = count($match_path_elements);
+		$this_path_elements   = [];
+		
+		foreach ($this->_path as $path) {
+			$elements = explode('/', ltrim($path, '/'));
+			
+			if (count($elements) === $count_path_elements) {
+				$this_path_elements = $elements;
+				break;
+			}
+		}
+		
+		if (empty($this_path_elements)) {
 			return false;
 		}
 		
@@ -148,7 +154,7 @@ class Route
 				return false;
 			}
 			
-			if ($this_path_element === $match_path_elements[$i]) {
+			if (strcasecmp($this_path_element, $match_path_elements[$i]) === 0) {
 				$possible_match_string .= "/{$match_path_elements[$i]}";
 				continue;
 			}
@@ -188,7 +194,7 @@ class Route
 		
 		if ($possible_match_string === $path_to_match) {
 			if (null !== $found_dynamic_class) {
-				$this->setMapClass(($this->_classPrefix ?: '') . $found_dynamic_class);
+				$this->setMapClass($found_dynamic_class);
 			}
 			
 			if (null !== $found_dynamic_method) {
@@ -197,6 +203,10 @@ class Route
 			
 			foreach ($found_dynamic_args as $key => $found_dynamic_arg) {
 				$this->_addMapArgument($key, $found_dynamic_arg);
+			}
+
+			if ($this->_classPrefix) {
+				$this->setMapClass($this->_classPrefix . ucfirst($this->getMapClass()));
 			}
 			
 			return true;

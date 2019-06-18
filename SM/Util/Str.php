@@ -20,6 +20,11 @@ class Str
 		return md5($mix);
 	}
 	
+	public static function nameize($str)
+	{
+		return ucfirst(strtolower($str));
+	}
+	
 	public static function camelCase($str)
 	{
 		return str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', strtolower($str))));
